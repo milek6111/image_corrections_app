@@ -61,7 +61,7 @@ protected:
 	wxPanel* Miniature_Panel;
 	wxScrollBar* Vertical_Scrollbar;
 
-	// Virtual event handlers, override them in your derived class
+	//// Virtual event handlers, override them in your derived class
 	virtual void Histogram_ButtonOnButtonClick(wxCommandEvent& event) { event.Skip(); }
 	virtual void Load_File_ButtonOnButtonClick(wxCommandEvent& event) { event.Skip(); }
 	virtual void SaveFileButtonOnButtonClick(wxCommandEvent& event) { event.Skip(); }
