@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\msi\Desktop\wxWidgets-3.2.2.1\include\msvc;C:\Users\msi\Desktop\wxWidgets-3.2.2.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\msi\Desktop\wxWidgets-3.2.2.1\lib\vc_x64_lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\wxWidgets-3.2.2.1\lib\vc_x64_lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\wxWidgets-3.2.2.1\include\;C:\wxWidgets-3.2.2.1\include\msvc;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\msi\Desktop\wxWidgets-3.2.2.1\include\msvc;C:\Users\msi\Desktop\wxWidgets-3.2.2.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\msi\Desktop\wxWidgets-3.2.2.1\lib\vc_x64_lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\wxWidgets-3.2.2.1\lib\vc_x64_lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\wxWidgets-3.2.2.1\include\;C:\wxWidgets-3.2.2.1\include\msvc;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
