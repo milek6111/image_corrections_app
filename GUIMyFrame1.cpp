@@ -50,6 +50,16 @@ void GUIMyFrame1::Vertical_ScrollbarOnScroll(wxScrollEvent& event) {
 	displayMainImage();
 }
 
+void GUIMyFrame1::Brightness_SliderOnScroll(wxScrollEvent& event) {
+	Brightness(Brightness_Slider->GetValue());
+	displayMainImage();
+}
+
+void GUIMyFrame1::Contrast_SliderOnScroll(wxScrollEvent& event) {
+	Contrast(Contrast_Slider->GetValue());
+	displayMainImage();
+}
+
 void GUIMyFrame1::disableButtons() {
 	Histogram_Button->Disable();
 	SaveFileButton->Disable();
@@ -124,6 +134,13 @@ void GUIMyFrame1::afterScroll() {
 	int orgYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
 	//preparing image on main screen
 	currentOnScreenImage = processingFullSizeImage.GetSubImage(wxRect(orgXPos, orgYPos, orgImage.GetWidth() / miniatureSizeToRectSize, orgImage.GetHeight() / miniatureSizeToRectSize));
+	currentOnScreenImageOrg = currentOnScreenImage.Copy();
+
+	//reseting sliders positions
+	Brightness_Slider->SetValue(0);
+	Contrast_Slider->SetValue(0);
+	Gamma_Slider->SetValue(0);
+
 	/*
 		COLOR ADJUSMENT WILL BE ADDED THERE
 	*/
@@ -136,4 +153,52 @@ void GUIMyFrame1::displayMainImage() {
 	wxBitmap bitmap(currentOnScreenImage);
 	wxClientDC dc(Main_Panel);
 	dc.DrawBitmap(bitmap, 0, 0, true);
+}
+
+void GUIMyFrame1::Brightness(int value) {
+	currentOnScreenImage = currentOnScreenImageOrg.Copy();
+	unsigned char* temp = currentOnScreenImage.GetData();
+	unsigned char* temp1 = (unsigned char*)malloc(currentOnScreenImage.GetWidth() *currentOnScreenImage.GetHeight() * 3);
+	int x;
+	for (int i = 0; i < currentOnScreenImage.GetWidth() * currentOnScreenImage.GetHeight() * 3; i++) {
+
+		x = temp[i] + value;
+
+		if (x > 255)	temp1[i] = 255;
+		else if (x < 0)	temp1[i] = 0;
+		else temp1[i] = x;
+
+	}
+	currentOnScreenImage.SetData(temp1);
+}
+
+void GUIMyFrame1::Contrast(int value) {
+	currentOnScreenImage = currentOnScreenImageOrg.Copy();
+	unsigned char* temp = currentOnScreenImage.GetData();
+	unsigned char* temp1 = (unsigned char*)malloc(currentOnScreenImage.GetWidth() * currentOnScreenImage.GetHeight() * 3);
+	int x;
+
+	double newwal;
+
+	if (value < 0) {
+		newwal = (value + 100) / 100.0;
+	}
+	else if (value > 0) {
+		newwal = 1 + value / 10.0;
+	}
+	else {
+		newwal = 1;
+	}
+
+
+	for (int i = 0; i < currentOnScreenImage.GetWidth() * currentOnScreenImage.GetHeight() * 3; i++) {
+
+		x = (temp[i] - 128) * newwal + 128;
+
+		if (x > 255)	temp1[i] = 255;
+		else if (x < 0)	temp1[i] = 0;
+		else temp1[i] = x;
+
+	}
+	currentOnScreenImage.SetData(temp1);
 }

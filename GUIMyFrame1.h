@@ -14,6 +14,8 @@ public:
 	void Horizontal_ScrollbarOnScroll(wxScrollEvent& event) override;
 	void Vertical_ScrollbarOnScroll(wxScrollEvent& event) override;
 	void SaveFileButtonOnButtonClick(wxCommandEvent& event) override;
+	virtual void Brightness_SliderOnScroll(wxScrollEvent& event) override; 
+	virtual void Contrast_SliderOnScroll(wxScrollEvent& event) override; 
 private:
 	void disableButtons();
 	void enableButtons();
@@ -22,9 +24,12 @@ private:
 	void afterScroll();
 	void displayMainImage();
 	void prepareMainFrame();
+	void Brightness(int value);
+	void Contrast(int value);
 	wxImage orgImage; //orginal image in full resolution, it should never be edited
 	wxImage processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
 	wxImage currentOnScreenImage; //part of image which is displayed on main screen and we perform all operation on it
+	wxImage currentOnScreenImageOrg; // original image displayed on main screen
 	wxImage photoThumbnail; //photo tumbnail all image which is displayed on down-right corner of program
 	wxSize selectedRectSize; //this is shown on miniature and select which part of image is displayed on main screen
 	int miniatureSizeToRectSize = 5; //it is used to create rect on miniarue with proper size
