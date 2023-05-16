@@ -1,24 +1,28 @@
 #include "GUIMyFrame1.h"
 
+
 GUIMyFrame1::GUIMyFrame1(wxWindow* parent) : MyFrame1(parent) {
 	//controls will be enabled when we load image
 	disableButtons();
-
-	wxImage::AddHandler(new wxJPEGHandler);
-	wxImage::AddHandler(new wxPNGHandler);
 }
 
 void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
-	wxFileDialog openFileDialog(this, "Choose a file", "", "", "JPG Files (*.jpg)|*.jpg| PNG Files (*.png)|*png", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog openFileDialog(this, "Choose a file", "", "", "Image files (*.png;*.jpg)|*.png;*.jpg", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (openFileDialog.ShowModal() == wxID_CANCEL) {
 		return;
 	}
-	//wxImage image;
-	if (!orgImage.LoadFile(openFileDialog.GetPath())) {
-		wxMessageBox(_("Sprobuj ponownie zaladowac obrazek"));
-		return;
+
+	wxImage::AddHandler(new wxJPEGHandler);
+	wxImage::AddHandler(new wxPNGHandler);
+	wxImage image;
+	{
+		wxLogNull logNo;
+		if (!image.LoadFile(openFileDialog.GetPath())) {
+			wxMessageBox(_("Sprobuj ponownie zaladowac obrazek"));
+			return;
+		}
+		orgImage = image.Copy();
 	}
-	
 	processingFullSizeImage = orgImage.Copy();
 	prepareScaledThumbnail();
 	afterScroll();
@@ -26,10 +30,21 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 	enableButtons();
 }
 
+void GUIMyFrame1::SaveFileButtonOnButtonClick(wxCommandEvent& event) {
+	wxFileDialog saveFileDialog(this, "Choose a file", "", "", "Image Files (*.png;*.jpg)|*.pnh;*.jpg", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (saveFileDialog.ShowModal() == wxID_CANCEL) return;
+	wxImage saveImage = processingFullSizeImage.Copy();
+	saveImage.AddHandler(new wxJPEGHandler);
+	saveImage.AddHandler(new wxPNGHandler);
+	saveImage.SaveFile(saveFileDialog.GetPath());
+}
+
+
 void GUIMyFrame1::Horizontal_ScrollbarOnScroll(wxScrollEvent& event) {
 	afterScroll();
 	displayMainImage();
 }
+
 void GUIMyFrame1::Vertical_ScrollbarOnScroll(wxScrollEvent& event) {
 	afterScroll();
 	displayMainImage();
@@ -79,7 +94,6 @@ void GUIMyFrame1::displayThumbnail(int xRectPos, int yRectPos) {
 		return;
 	wxBitmap bitmap(photoThumbnail);
 	wxClientDC dc(Miniature_Panel);
-	dc.Clear();
 	dc.DrawBitmap(bitmap, 0, 0, true);
 
 	dc.SetBrush(*wxTRANSPARENT_BRUSH);

@@ -3,6 +3,9 @@
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx\dcclient.h>
+#include <fstream>
+#include <wx/log.h>
+
 
 class GUIMyFrame1 : public MyFrame1 {
 public:
@@ -10,6 +13,7 @@ public:
 	void Load_File_ButtonOnButtonClick(wxCommandEvent& event) override;
 	void Horizontal_ScrollbarOnScroll(wxScrollEvent& event) override;
 	void Vertical_ScrollbarOnScroll(wxScrollEvent& event) override;
+	void SaveFileButtonOnButtonClick(wxCommandEvent& event) override;
 private:
 	void disableButtons();
 	void enableButtons();

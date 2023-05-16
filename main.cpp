@@ -1,4 +1,6 @@
 #include <wx/wxprec.h>
+
+#include <wx/wx.h>
 #include "GUIMyFrame1.h"
 
 class MyApp : public wxApp {
