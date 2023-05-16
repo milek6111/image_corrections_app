@@ -21,6 +21,9 @@
     <ClCompile Include="GUI.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUIMyFrame1.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GUI.h">

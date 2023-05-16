@@ -11,7 +11,7 @@
 
 MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style) : wxFrame(parent, id, title, pos, size, style)
 {
-	this->SetSizeHints(wxSize(900, 600), wxSize(900, 600));
+	this->SetSizeHints(wxSize(1500,800), wxSize(1500,800));
 
 	wxBoxSizer* bSizer1;
 	bSizer1 = new wxBoxSizer(wxHORIZONTAL);
@@ -24,7 +24,6 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 
 	Main_Panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 	Main_Panel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));
-
 	bSizer19->Add(Main_Panel, 1, wxEXPAND | wxALL, 5);
 
 
@@ -173,7 +172,8 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	bSizer13 = new wxBoxSizer(wxVERTICAL);
 
 	Horizontal_Scrollbar = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxSize(350, 20), wxSB_HORIZONTAL);
-	Horizontal_Scrollbar->SetThumbSize(0.4);
+	Horizontal_Scrollbar->SetThumbSize(1);
+	Horizontal_Scrollbar->SetRange(100);
 	bSizer13->Add(Horizontal_Scrollbar, 1, wxALL, 5);
 
 
@@ -187,6 +187,7 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 
 	Miniature_Panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(250, 250), wxTAB_TRAVERSAL);
 	Miniature_Panel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_INFOBK));
+	Miniature_Panel->SetMaxSize(wxSize(-1, 300));
 
 	bSizer16->Add(Miniature_Panel, 1, wxEXPAND | wxALL, 5);
 
@@ -196,8 +197,9 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	wxBoxSizer* bSizer18;
 	bSizer18 = new wxBoxSizer(wxHORIZONTAL);
 
-	Vertical_Scrollbar = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxSize(20, 275), wxSB_VERTICAL);
-	Vertical_Scrollbar->SetThumbSize(0.4);
+	Vertical_Scrollbar = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxSize(20,Miniature_Panel->GetSize().y), wxSB_VERTICAL);
+	Vertical_Scrollbar->SetThumbSize(1);
+	Vertical_Scrollbar->SetRange(100);
 	bSizer18->Add(Vertical_Scrollbar, 1, wxALL, 5);
 
 
@@ -211,7 +213,6 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 
 
 	bSizer1->Add(bSizer4, 0, wxEXPAND, 5);
-
 
 	this->SetSizer(bSizer1);
 	this->Layout();
