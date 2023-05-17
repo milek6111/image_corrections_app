@@ -99,10 +99,10 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	Brightness_Slider = new wxSlider(this, wxID_ANY, 0, -100, 100, wxDefaultPosition, wxSize(250, 20), wxSL_HORIZONTAL);
 	bSizer23->Add(Brightness_Slider, 1, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
 
-	Contrast_Slider = new wxSlider(this, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxSize(250, 20), wxSL_HORIZONTAL);
+	Contrast_Slider = new wxSlider(this, wxID_ANY, 0, -100, 100, wxDefaultPosition, wxSize(250, 20), wxSL_HORIZONTAL);
 	bSizer23->Add(Contrast_Slider, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
 
-	Gamma_Slider = new wxSlider(this, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxSize(250, 20), wxSL_HORIZONTAL);
+	Gamma_Slider = new wxSlider(this, wxID_ANY, 0, -100, 100, wxDefaultPosition, wxSize(250, 20), wxSL_HORIZONTAL);
 	bSizer23->Add(Gamma_Slider, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
 
 
