@@ -73,7 +73,7 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	bSizer5->Add(SaveFileButton, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL, 5);
 
 
-	bSizer4->Add(bSizer5, 0, wxEXPAND | wxALIGN_RIGHT, 5);
+	bSizer4->Add(bSizer5, 0, wxEXPAND, 5);
 
 	wxBoxSizer* bSizer7;
 	bSizer7 = new wxBoxSizer(wxHORIZONTAL);

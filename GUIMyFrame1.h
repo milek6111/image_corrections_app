@@ -5,7 +5,7 @@
 #include <wx\dcclient.h>
 #include <fstream>
 #include <wx/log.h>
-
+#include "FreeImage.h"
 
 class GUIMyFrame1 : public MyFrame1 {
 public:
@@ -34,3 +34,4 @@ private:
 	wxSize selectedRectSize; //this is shown on miniature and select which part of image is displayed on main screen
 	int miniatureSizeToRectSize = 5; //it is used to create rect on miniarue with proper size
 };
+

@@ -4,6 +4,7 @@
 GUIMyFrame1::GUIMyFrame1(wxWindow* parent) : MyFrame1(parent) {
 	//controls will be enabled when we load image
 	disableButtons();
+
 }
 
 void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
