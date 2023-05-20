@@ -16,6 +16,8 @@ public:
 	void SaveFileButtonOnButtonClick(wxCommandEvent& event) override;
 	virtual void Brightness_SliderOnScroll(wxScrollEvent& event) override; 
 	virtual void Contrast_SliderOnScroll(wxScrollEvent& event) override; 
+	virtual void Gamma_SliderOnScroll(wxScrollEvent& event) override;
+
 private:
 	void disableButtons();
 	void enableButtons();
@@ -33,5 +35,15 @@ private:
 	wxImage photoThumbnail; //photo tumbnail all image which is displayed on down-right corner of program
 	wxSize selectedRectSize; //this is shown on miniature and select which part of image is displayed on main screen
 	int miniatureSizeToRectSize = 5; //it is used to create rect on miniarue with proper size
+	
+	double brightness = 0;
+	double contrast = 0;
+	double gamma = 1.0;
+	FIBITMAP* wxImageToFIBITMAP(wxImage* image); //convert wxImage to FIBITMAP
+	wxImage* FIBITMAPTowxImage(FIBITMAP* bitmap); //convert FIBITMAP to wxImage
+	void AdjustColors(double brightness, double contrast, double gamma); //change brightness, contrast and gamma of currentOnScreenImage
+	FIBITMAP* currentFIImage; //current part of displayed image in FIBITMAP format
+
+
 };
 
