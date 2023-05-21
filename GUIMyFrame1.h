@@ -34,7 +34,10 @@ private:
 	wxImage currentOnScreenImageOrg; // original image displayed on main screen
 	wxImage photoThumbnail; //photo tumbnail all image which is displayed on down-right corner of program
 	wxSize selectedRectSize; //this is shown on miniature and select which part of image is displayed on main screen
-	int miniatureSizeToRectSize = 5; //it is used to create rect on miniarue with proper size
+	wxSize miniatureSizeToRectSize; //it is used to create rect on miniarue with proper size
+	double xProportion; //width of miniature divided by rect width
+	double yProportion; //height of miniature divided by rect height 
+	wxPoint redRectPosition; //stores position of upper left corner of red rect 
 	
 	double brightness = 0;
 	double contrast = 0;
