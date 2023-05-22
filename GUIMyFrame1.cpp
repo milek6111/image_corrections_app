@@ -1,4 +1,4 @@
-#include "GUIMyFrame1.h"
+﻿#include "GUIMyFrame1.h"
 
 
 GUIMyFrame1::GUIMyFrame1(wxWindow* parent) : MyFrame1(parent) {
@@ -23,6 +23,10 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 			return;
 		}
 		orgImage = image.Copy();
+	}
+	if (image.GetSize().x < Main_Panel->GetSize().x || image.GetSize().y < Main_Panel->GetSize().y) {
+		wxMessageBox(_("Obrazek w zbyt małej rozdzielczosci, sprobuj ponownie"));
+		return;
 	}
 	processingFullSizeImage = orgImage.Copy();
 	prepareScaledThumbnail();
@@ -127,24 +131,28 @@ void GUIMyFrame1::prepareScaledThumbnail() {
 	double propotion = static_cast<double>(orgImage.GetWidth()) / orgImage.GetHeight();
 	int panelWidth = Miniature_Panel->GetSize().x;
 	wxSize miniatureSize = wxSize(panelWidth, panelWidth/propotion);
+	selectedRectSize = wxSize(static_cast<double>(Main_Panel->GetSize().x) / orgImage.GetWidth() * miniatureSize.x, static_cast<double>(Main_Panel->GetSize().y) / orgImage.GetHeight()* miniatureSize.y);
 	Miniature_Panel->SetSize(miniatureSize);
 	photoThumbnail = orgImage.Scale(miniatureSize.x, miniatureSize.y);
+	
+	//it is used for proper scrolling
+	xProportion = static_cast<double>(miniatureSize.x) / selectedRectSize.x;
+	yProportion = static_cast<double>(miniatureSize.y) / selectedRectSize.y;
 
 	//adjusting scrollbars to new panel size
 	Horizontal_Scrollbar->SetSize(wxSize(miniatureSize.x, 20));
 	Vertical_Scrollbar->SetSize(wxSize(20, miniatureSize.y));
-	selectedRectSize = wxSize(miniatureSize.x / miniatureSizeToRectSize, miniatureSize.y / miniatureSizeToRectSize);
 }
 
 
 void GUIMyFrame1::afterScroll() {
-	int xPos = static_cast<double>(Horizontal_Scrollbar->GetThumbPosition()) / Horizontal_Scrollbar->GetRange() * Miniature_Panel->GetSize().x * (1 - 1.0 / miniatureSizeToRectSize);
-	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / miniatureSizeToRectSize);
+	int xPos = static_cast<double>(Horizontal_Scrollbar->GetThumbPosition()) / Horizontal_Scrollbar->GetRange() * Miniature_Panel->GetSize().x * (1 - 1.0 / xProportion);
+	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / yProportion);
 	displayThumbnail(xPos, yPos);
 	int orgXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
 	int orgYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
 	//preparing image on main screen
-	currentOnScreenImage = processingFullSizeImage.GetSubImage(wxRect(orgXPos, orgYPos, orgImage.GetWidth() / miniatureSizeToRectSize, orgImage.GetHeight() / miniatureSizeToRectSize));
+	currentOnScreenImage = processingFullSizeImage.GetSubImage(wxRect(orgXPos, orgYPos, Main_Panel->GetSize().x, Main_Panel->GetSize().y));
 	currentOnScreenImageOrg = currentOnScreenImage.Copy();
 	AdjustColors(brightness, contrast, gamma);
 }
