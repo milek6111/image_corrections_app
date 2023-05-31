@@ -17,7 +17,12 @@ public:
 	virtual void Brightness_SliderOnScroll(wxScrollEvent& event) override; 
 	virtual void Contrast_SliderOnScroll(wxScrollEvent& event) override; 
 	virtual void Gamma_SliderOnScroll(wxScrollEvent& event) override;
-
+	virtual void Red_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Green_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Blue_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Dark_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Medium_CheckBoxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Bright_CheckboxOnCheckBox(wxCommandEvent& event) override;
 private:
 	void disableButtons();
 	void enableButtons();
@@ -26,12 +31,15 @@ private:
 	void afterScroll();
 	void displayMainImage();
 	void prepareMainFrame();
-	void Brightness(int value);
-	void Contrast(int value);
+	void changeRGBCheckboxesState(bool state);
+	void changeBrightnessCheckboxesState(bool state);
+	void checkRGBCheckboxCounter();
+	void checkBrightnessCheckboxCounter();
 	wxImage orgImage; //orginal image in full resolution, it should never be edited
 	wxImage processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
+	FIBITMAP* FreeImage_processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
+	FIBITMAP* FreeImage_currentOnScreenImage; //part of image which is displayed on main screen and we perform all operation on it
 	wxImage currentOnScreenImage; //part of image which is displayed on main screen and we perform all operation on it
-	wxImage currentOnScreenImageOrg; // original image displayed on main screen
 	wxImage photoThumbnail; //photo tumbnail all image which is displayed on down-right corner of program
 	wxSize selectedRectSize; //this is shown on miniature and select which part of image is displayed on main screen
 	wxSize miniatureSizeToRectSize; //it is used to create rect on miniarue with proper size
@@ -42,6 +50,10 @@ private:
 	double brightness = 0;
 	double contrast = 0;
 	double gamma = 1.0;
+	int checkboxCounterBrightness = 0;
+	int checkboxCounterRGB = 0; //count how many RGB checkboxes are checked
+	int currentOnScreenXPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
+	int currentOnScreenYPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
 	FIBITMAP* wxImageToFIBITMAP(wxImage* image); //convert wxImage to FIBITMAP
 	wxImage* FIBITMAPTowxImage(FIBITMAP* bitmap); //convert FIBITMAP to wxImage
 	void AdjustColors(double brightness, double contrast, double gamma); //change brightness, contrast and gamma of currentOnScreenImage

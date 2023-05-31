@@ -16,6 +16,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage image;
+	FREE_IMAGE_FORMAT fif;
 	{
 		wxLogNull logNo;
 		if (!image.LoadFile(openFileDialog.GetPath())) {
@@ -23,6 +24,19 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 			return;
 		}
 		orgImage = image.Copy();
+		fif = FreeImage_GetFileType(openFileDialog.GetPath());
+		if (fif == FIF_UNKNOWN) {
+			fif = FreeImage_GetFIFFromFilename(openFileDialog.GetPath());
+		}
+		if ((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
+			FreeImage_processingFullSizeImage = FreeImage_Load(fif, openFileDialog.GetPath());
+		}
+		else
+		{
+			wxMessageBox(_("Sprobuj ponownie zaladowac obrazek"));
+			return;
+		}
+
 	}
 	if (image.GetSize().x < Main_Panel->GetSize().x || image.GetSize().y < Main_Panel->GetSize().y) {
 		wxMessageBox(_("Obrazek w zbyt małej rozdzielczosci, sprobuj ponownie"));
@@ -56,14 +70,12 @@ void GUIMyFrame1::Vertical_ScrollbarOnScroll(wxScrollEvent& event) {
 }
 
 void GUIMyFrame1::Brightness_SliderOnScroll(wxScrollEvent& event) {
-	//Brightness(Brightness_Slider->GetValue());
 	brightness = (double)Brightness_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
 
 void GUIMyFrame1::Contrast_SliderOnScroll(wxScrollEvent& event) {
-	//Contrast(Contrast_Slider->GetValue());
 	contrast = (double)Contrast_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
@@ -149,11 +161,8 @@ void GUIMyFrame1::afterScroll() {
 	int xPos = static_cast<double>(Horizontal_Scrollbar->GetThumbPosition()) / Horizontal_Scrollbar->GetRange() * Miniature_Panel->GetSize().x * (1 - 1.0 / xProportion);
 	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / yProportion);
 	displayThumbnail(xPos, yPos);
-	int orgXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
-	int orgYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
-	//preparing image on main screen
-	currentOnScreenImage = processingFullSizeImage.GetSubImage(wxRect(orgXPos, orgYPos, Main_Panel->GetSize().x, Main_Panel->GetSize().y));
-	currentOnScreenImageOrg = currentOnScreenImage.Copy();
+	currentOnScreenXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
+	currentOnScreenYPos = - static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight() + orgImage.GetHeight();
 	AdjustColors(brightness, contrast, gamma);
 }
 
@@ -193,8 +202,145 @@ wxImage* GUIMyFrame1::FIBITMAPTowxImage(FIBITMAP* bitmap) {
 }
 
 void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
-	currentOnScreenImage = currentOnScreenImageOrg.Copy();
-	currentFIImage = wxImageToFIBITMAP(&currentOnScreenImage);
-	FreeImage_AdjustColors(currentFIImage, brightness, contrast, gamma);
-	currentOnScreenImage = *FIBITMAPTowxImage(currentFIImage);
+	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos,currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x,currentOnScreenYPos-Main_Panel->GetSize().y);
+	if (checkboxCounterBrightness > 0) {
+		//TO DO : adjusting gamma,brightness,contrast only for selected brightness of image
+	}
+	else {
+		//to optimize this operation we check how many checkbox is selected, thanks to that we perform maximum one iteration over pixels adjusting factors
+		if (checkboxCounterRGB == 1) {
+			FREE_IMAGE_COLOR_CHANNEL colorChannel;
+			if (Red_Checkbox->IsChecked()) {
+				colorChannel = FICC_RED;
+			}
+			else if (Green_Checkbox->IsChecked()) {
+				colorChannel = FICC_GREEN;
+			}
+			else {
+				colorChannel = FICC_BLUE;
+			}
+			FIBITMAP* toEdit = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
+			FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
+			FreeImage_SetChannel(FreeImage_currentOnScreenImage, toEdit, colorChannel);
+		}
+		else if (checkboxCounterRGB == 2) {
+			FREE_IMAGE_COLOR_CHANNEL colorChannel;
+			if (!Red_Checkbox->IsChecked()) {
+				colorChannel = FICC_RED;
+			}
+			else if (!Green_Checkbox->IsChecked()) {
+				colorChannel = FICC_GREEN;
+			}
+			else {
+				colorChannel = FICC_BLUE;
+			}
+			FIBITMAP* toSave = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
+			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+			FreeImage_SetChannel(FreeImage_currentOnScreenImage, toSave, colorChannel);
+		}
+		else {
+			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+		}
+	}
+	//FreeImage_Threshold(FreeImage_currentOnScreenImage,150);
+	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
+}
+
+void GUIMyFrame1::Red_CheckboxOnCheckBox(wxCommandEvent& event) {
+	if (Red_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	checkRGBCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Green_CheckboxOnCheckBox(wxCommandEvent& event) {
+	if (Green_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	checkRGBCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Blue_CheckboxOnCheckBox(wxCommandEvent& event){
+	if (Blue_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	checkRGBCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+
+void GUIMyFrame1::Dark_CheckboxOnCheckBox(wxCommandEvent& event) {
+	if (Dark_Checkbox->IsChecked())
+		checkboxCounterBrightness++;
+	else
+		checkboxCounterBrightness--;
+	checkBrightnessCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Medium_CheckBoxOnCheckBox(wxCommandEvent& event){
+	if (Medium_CheckBox->IsChecked())
+		checkboxCounterBrightness++;
+	else
+		checkboxCounterBrightness--;
+	checkBrightnessCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Bright_CheckboxOnCheckBox(wxCommandEvent& event){
+	if (Bright_Checkbox->IsChecked())
+		checkboxCounterBrightness++;
+	else
+		checkboxCounterBrightness--;
+	checkBrightnessCheckboxCounter();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+
+void GUIMyFrame1::checkRGBCheckboxCounter() {
+	if (checkboxCounterRGB == 0) {
+		changeBrightnessCheckboxesState(true);
+	}
+	else {
+		changeBrightnessCheckboxesState(false);
+	}
+}
+void GUIMyFrame1::checkBrightnessCheckboxCounter() {
+	if (checkboxCounterBrightness == 0) {
+		changeRGBCheckboxesState(true);
+	}
+	else {
+		changeRGBCheckboxesState(false);
+	}
+}
+
+
+void GUIMyFrame1::changeRGBCheckboxesState(bool state) {
+	if (state) {
+		Red_Checkbox->Enable();
+		Green_Checkbox->Enable();
+		Blue_Checkbox->Enable();
+	}
+	else {
+		Red_Checkbox->Disable();
+		Green_Checkbox->Disable();
+		Blue_Checkbox->Disable();
+	}
+}
+void GUIMyFrame1::changeBrightnessCheckboxesState(bool state) {
+	if (state) {
+		Dark_Checkbox->Enable();
+		Medium_CheckBox->Enable();
+		Bright_Checkbox->Enable();
+	}
+	else {
+		Dark_Checkbox->Disable();
+		Medium_CheckBox->Disable();
+		Bright_Checkbox->Disable();
+	}
 }
