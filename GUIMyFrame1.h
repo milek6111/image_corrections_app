@@ -31,10 +31,12 @@ private:
 	void afterScroll();
 	void displayMainImage();
 	void prepareMainFrame();
-	void changeRGBCheckboxesState(bool state);
-	void changeBrightnessCheckboxesState(bool state);
-	void checkRGBCheckboxCounter();
-	void checkBrightnessCheckboxCounter();
+	void changeRGBCheckboxesState(bool state); //enable or disable rgb checkboxes depending on passed state
+	void changeBrightnessCheckboxesState(bool state); //enable or disable brightness checkboxes depending on passed state
+	void checkRGBCheckboxCounter(); //check if any of RGB checboxes is checked, if RGBCheckboxcounter is equal 0 then brightness checkboxes are enabled
+	void checkBrightnessCheckboxCounter(); //check if any of Brightness checboxes is checked, if brightnessChecbkoxcounter is equal 0 then RGB checkboxes are enabled
+	void setBrightnessLimits(FIBITMAP* bitmap); //find maximum and minimum value of brightness of image and calculate rages which are use in brightness checkboxes
+	void adjustColorsBrightnessRange(std::function<bool(double, double, double)> f, double firstLimit, double secondLimit); //iterate over pixels and apply changes when passed function f is true
 	wxImage orgImage; //orginal image in full resolution, it should never be edited
 	wxImage processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
 	FIBITMAP* FreeImage_processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
@@ -50,13 +52,15 @@ private:
 	double brightness = 0;
 	double contrast = 0;
 	double gamma = 1.0;
-	int checkboxCounterBrightness = 0;
+	double brightnessLimits[2] = {85,170};
+	int checkboxCounterBrightness = 0; //count how many brightness checkboxes are checked
 	int checkboxCounterRGB = 0; //count how many RGB checkboxes are checked
 	int currentOnScreenXPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
 	int currentOnScreenYPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
 	FIBITMAP* wxImageToFIBITMAP(wxImage* image); //convert wxImage to FIBITMAP
 	wxImage* FIBITMAPTowxImage(FIBITMAP* bitmap); //convert FIBITMAP to wxImage
 	void AdjustColors(double brightness, double contrast, double gamma); //change brightness, contrast and gamma of currentOnScreenImage
+	void AdjustColorsForBitmap(FIBITMAP * bitmap, double brightness, double contrast, double gamma);
 	FIBITMAP* currentFIImage; //current part of displayed image in FIBITMAP format
 
 

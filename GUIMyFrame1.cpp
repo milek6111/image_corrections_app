@@ -42,6 +42,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 		wxMessageBox(_("Obrazek w zbyt małej rozdzielczosci, sprobuj ponownie"));
 		return;
 	}
+	setBrightnessLimits(FreeImage_processingFullSizeImage);
 	processingFullSizeImage = orgImage.Copy();
 	prepareScaledThumbnail();
 	afterScroll();
@@ -201,10 +202,53 @@ wxImage* GUIMyFrame1::FIBITMAPTowxImage(FIBITMAP* bitmap) {
 	return image;
 }
 
+void GUIMyFrame1::adjustColorsBrightnessRange(std::function<bool(double, double, double)> f, double firstLimit, double secondLimit) {
+	FIBITMAP* toEdit = FreeImage_Clone(FreeImage_currentOnScreenImage);
+	FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
+	RGBQUAD color;
+	RGBQUAD orgColor;
+	for (int y = 0; y < FreeImage_GetHeight(toEdit); y++) {
+		for (int x = 0; x < FreeImage_GetWidth(toEdit); x++) {
+			FreeImage_GetPixelColor(FreeImage_currentOnScreenImage, x, y, &orgColor);
+			if (f(0.299 * orgColor.rgbRed + 0.587 * orgColor.rgbGreen + 0.114 * orgColor.rgbBlue,firstLimit,secondLimit)) {
+				FreeImage_GetPixelColor(toEdit, x, y, &color);
+				FreeImage_SetPixelColor(FreeImage_currentOnScreenImage, x, y, &color);
+			}
+		}
+	}
+}
+
+void GUIMyFrame1::AdjustColorsForBitmap(FIBITMAP* bitmap, double brightness, double contrast, double gamma) {
+
+}
+
 void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
 	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos,currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x,currentOnScreenYPos-Main_Panel->GetSize().y);
 	if (checkboxCounterBrightness > 0) {
-		//TO DO : adjusting gamma,brightness,contrast only for selected brightness of image
+		if (checkboxCounterBrightness == 3) {
+			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+		}
+		else if(Dark_Checkbox->IsChecked() && Bright_Checkbox->IsChecked()) {
+			adjustColorsBrightnessRange([&](double brightness, double x, double y) {
+				if (brightness <= x || brightness >= y)
+					return true;
+				return false;
+				}, brightnessLimits[0], brightnessLimits[1]);
+		}
+		else {
+			double from = 0.0 , to = 255.0;
+			if (Dark_Checkbox->IsChecked() && Medium_CheckBox->IsChecked()) { to = brightnessLimits[1]; }
+			else if (Medium_CheckBox->IsChecked() && Bright_Checkbox->IsChecked()) { from = brightnessLimits[0]; }
+			else if (Dark_Checkbox->IsChecked()) { to = brightnessLimits[0]; }
+			else if (Medium_CheckBox->IsChecked()) { from = brightnessLimits[0]; to = brightnessLimits[1]; }
+			else { from = brightnessLimits[1]; }
+
+			adjustColorsBrightnessRange([&](double brightness, double x, double y) {
+				if (brightness >= x && brightness <= y)
+					return true;
+				return false;
+				}, from, to);
+		}
 	}
 	else {
 		//to optimize this operation we check how many checkbox is selected, thanks to that we perform maximum one iteration over pixels adjusting factors
@@ -242,7 +286,6 @@ void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma)
 			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
 		}
 	}
-	//FreeImage_Threshold(FreeImage_currentOnScreenImage,150);
 	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
 }
 
@@ -343,4 +386,21 @@ void GUIMyFrame1::changeBrightnessCheckboxesState(bool state) {
 		Medium_CheckBox->Disable();
 		Bright_Checkbox->Disable();
 	}
+}
+void GUIMyFrame1::setBrightnessLimits(FIBITMAP* bitmap) {
+	double maxBrightness = 0.0;
+	double minBrightness = 255.0;
+	RGBQUAD color;
+	for (int y = 0; y < FreeImage_GetHeight(bitmap); y++) {
+		for (int x = 0; x < FreeImage_GetWidth(bitmap); x++) {
+			FreeImage_GetPixelColor(bitmap, x, y, &color);
+			double b = 0.299 * color.rgbRed + 0.587 * color.rgbGreen + 0.114 * color.rgbBlue;
+			if (b > maxBrightness)
+				maxBrightness = b;
+			if (b < minBrightness)
+				minBrightness = b;
+		}
+	}
+	brightnessLimits[0] = (maxBrightness-minBrightness) / 3 + minBrightness ;
+	brightnessLimits[1] = 2 * (maxBrightness-minBrightness) / 3 + minBrightness;
 }
