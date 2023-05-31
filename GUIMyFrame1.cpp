@@ -29,6 +29,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 		return;
 	}
 	processingFullSizeImage = orgImage.Copy();
+	FreeImage_processingFullSizeImage = wxImageToFIBITMAP(&processingFullSizeImage);
 	prepareScaledThumbnail();
 	afterScroll();
 	displayMainImage();
@@ -56,14 +57,12 @@ void GUIMyFrame1::Vertical_ScrollbarOnScroll(wxScrollEvent& event) {
 }
 
 void GUIMyFrame1::Brightness_SliderOnScroll(wxScrollEvent& event) {
-	//Brightness(Brightness_Slider->GetValue());
 	brightness = (double)Brightness_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
 
 void GUIMyFrame1::Contrast_SliderOnScroll(wxScrollEvent& event) {
-	//Contrast(Contrast_Slider->GetValue());
 	contrast = (double)Contrast_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
@@ -149,11 +148,8 @@ void GUIMyFrame1::afterScroll() {
 	int xPos = static_cast<double>(Horizontal_Scrollbar->GetThumbPosition()) / Horizontal_Scrollbar->GetRange() * Miniature_Panel->GetSize().x * (1 - 1.0 / xProportion);
 	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / yProportion);
 	displayThumbnail(xPos, yPos);
-	int orgXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
-	int orgYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
-	//preparing image on main screen
-	currentOnScreenImage = processingFullSizeImage.GetSubImage(wxRect(orgXPos, orgYPos, Main_Panel->GetSize().x, Main_Panel->GetSize().y));
-	currentOnScreenImageOrg = currentOnScreenImage.Copy();
+	currentOnScreenXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
+	currentOnScreenYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
 	AdjustColors(brightness, contrast, gamma);
 }
 
@@ -193,8 +189,7 @@ wxImage* GUIMyFrame1::FIBITMAPTowxImage(FIBITMAP* bitmap) {
 }
 
 void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
-	currentOnScreenImage = currentOnScreenImageOrg.Copy();
-	currentFIImage = wxImageToFIBITMAP(&currentOnScreenImage);
-	FreeImage_AdjustColors(currentFIImage, brightness, contrast, gamma);
-	currentOnScreenImage = *FIBITMAPTowxImage(currentFIImage);
+	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos, currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x, currentOnScreenYPos + Main_Panel->GetSize().y);
+	FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
 }
