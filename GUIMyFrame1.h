@@ -17,6 +17,9 @@ public:
 	virtual void Brightness_SliderOnScroll(wxScrollEvent& event) override; 
 	virtual void Contrast_SliderOnScroll(wxScrollEvent& event) override; 
 	virtual void Gamma_SliderOnScroll(wxScrollEvent& event) override;
+	virtual void Red_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Green_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Blue_CheckboxOnCheckBox(wxCommandEvent& event) override;
 
 private:
 	void disableButtons();
@@ -26,8 +29,6 @@ private:
 	void afterScroll();
 	void displayMainImage();
 	void prepareMainFrame();
-	void Brightness(int value);
-	void Contrast(int value);
 	wxImage orgImage; //orginal image in full resolution, it should never be edited
 	wxImage processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
 	FIBITMAP* FreeImage_processingFullSizeImage; //image in full resolution, currentOnScreenImage is based on that image, it is only updated when user click apply button
@@ -43,6 +44,7 @@ private:
 	double brightness = 0;
 	double contrast = 0;
 	double gamma = 1.0;
+	int checkboxCounterRGB = 0; //count how many RGB checkboxes are checked
 	int currentOnScreenXPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
 	int currentOnScreenYPos = 0; //is is used for copying proper part of image from orignal image to currentOnScreenImage
 	FIBITMAP* wxImageToFIBITMAP(wxImage* image); //convert wxImage to FIBITMAP

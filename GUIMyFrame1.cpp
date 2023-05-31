@@ -149,7 +149,7 @@ void GUIMyFrame1::afterScroll() {
 	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / yProportion);
 	displayThumbnail(xPos, yPos);
 	currentOnScreenXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
-	currentOnScreenYPos = static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight();
+	currentOnScreenYPos = - static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight() + orgImage.GetHeight();
 	AdjustColors(brightness, contrast, gamma);
 }
 
@@ -189,7 +189,65 @@ wxImage* GUIMyFrame1::FIBITMAPTowxImage(FIBITMAP* bitmap) {
 }
 
 void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
-	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos, currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x, currentOnScreenYPos + Main_Panel->GetSize().y);
-	FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos,currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x,currentOnScreenYPos-Main_Panel->GetSize().y);
+	//to optimize this operation we check how many checkbox is selected, thanks to that we perform maximum one iteration over pixels adjusting factors
+	if (checkboxCounterRGB == 1) {
+		FREE_IMAGE_COLOR_CHANNEL colorChannel;
+		if (Red_Checkbox->IsChecked()) {
+			colorChannel = FICC_RED;
+		}
+		else if (Green_Checkbox->IsChecked()) {
+			colorChannel = FICC_GREEN;
+		}
+		else {
+			colorChannel = FICC_BLUE;
+		}
+		FIBITMAP* toEdit = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
+		FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
+		FreeImage_SetChannel(FreeImage_currentOnScreenImage, toEdit, colorChannel);
+	}
+	else if (checkboxCounterRGB == 2) {
+		FREE_IMAGE_COLOR_CHANNEL colorChannel;
+		if (!Red_Checkbox->IsChecked()) {
+			colorChannel = FICC_RED;
+		}
+		else if (!Green_Checkbox->IsChecked()) {
+			colorChannel = FICC_GREEN;
+		}
+		else {
+			colorChannel = FICC_BLUE;
+		}
+		FIBITMAP* toSave = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
+		FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+		FreeImage_SetChannel(FreeImage_currentOnScreenImage, toSave, colorChannel);
+	}
+	else {
+		FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+	}
 	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
+}
+
+void GUIMyFrame1::Red_CheckboxOnCheckBox(wxCommandEvent& event) {
+	if (Red_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Green_CheckboxOnCheckBox(wxCommandEvent& event) {
+	if (Green_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+}
+void GUIMyFrame1::Blue_CheckboxOnCheckBox(wxCommandEvent& event){
+	if (Blue_Checkbox->IsChecked())
+		checkboxCounterRGB++;
+	else
+		checkboxCounterRGB--;
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
 }
