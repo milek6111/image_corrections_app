@@ -75,12 +75,12 @@ void GUIMyFrame1::Brightness_SliderOnScroll(wxScrollEvent& event) {
 	brightness = (double)Brightness_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
+	drawHistogram(FreeImage_currentOnScreenImage);
 }
 
 void GUIMyFrame1::Contrast_SliderOnScroll(wxScrollEvent& event) {
 	contrast = (double)Contrast_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
-	displayMainImage();
 }
 
 void GUIMyFrame1::Gamma_SliderOnScroll(wxScrollEvent& event) {
@@ -102,7 +102,7 @@ void GUIMyFrame1::disableButtons() {
 	Dark_Checkbox->Disable();
 	Medium_CheckBox->Disable();
 	Bright_Checkbox->Disable();
-	Apply_Size_Button->Disable();
+	//Apply_Size_Button->Disable();
 	Horizontal_Scrollbar->Disable();
 	Vertical_Scrollbar->Disable();
 	Reset_Button->Disable();
@@ -121,7 +121,7 @@ void GUIMyFrame1::enableButtons() {
 	Dark_Checkbox->Enable();
 	Medium_CheckBox->Enable();
 	Bright_Checkbox->Enable();
-	Apply_Size_Button->Enable();
+	//Apply_Size_Button->Enable();
 	Horizontal_Scrollbar->Enable();
 	Vertical_Scrollbar->Enable();
 	Reset_Button->Enable();
@@ -288,6 +288,7 @@ void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma)
 	AdjustColorsForBitmap(FreeImage_currentOnScreenImage, brightness, contrast, gamma,Red_Checkbox->IsChecked(), Green_Checkbox->IsChecked(), Blue_Checkbox->IsChecked()
 		,Dark_Checkbox->IsChecked(),Medium_CheckBox->IsChecked(),Bright_Checkbox->IsChecked(),brightnessLimits);
 	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
+	drawHistogram(FreeImage_currentOnScreenImage);
 }
 
 void GUIMyFrame1::Red_CheckboxOnCheckBox(wxCommandEvent& event) {
@@ -404,4 +405,29 @@ void GUIMyFrame1::setBrightnessLimits(FIBITMAP* bitmap) {
 	}
 	brightnessLimits[0] = (maxBrightness-minBrightness) / 3 + minBrightness ;
 	brightnessLimits[1] = 2 * (maxBrightness-minBrightness) / 3 + minBrightness;
+}
+
+void GUIMyFrame1::Histogram_ButtonOnButtonClick(wxCommandEvent& event) {
+	drawHistogram(FreeImage_processingFullSizeImage);
+}
+
+void GUIMyFrame1::drawHistogram(FIBITMAP *bitmap) {
+	FreeImage_GetHistogram(bitmap, data, FICC_RGB);
+
+	double x = Histogram_Panel->GetSize().x;
+
+	double y = Histogram_Panel->GetSize().y;
+
+	double dx = x / 256;
+
+	int max = *std::max_element(data, data + 255);
+
+	wxClientDC dc(Histogram_Panel);
+	
+	dc.Clear();
+
+	for (unsigned int i = 0; i < 256; i++) {
+		dc.SetBrush(*wxBLACK_BRUSH);
+		dc.DrawRectangle(wxRect(i * dx, y - ((double)data[i] / max) * y, 4, ((double)data[i] / max) * y));
+	}
 }

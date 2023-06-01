@@ -23,6 +23,7 @@ public:
 	virtual void Dark_CheckboxOnCheckBox(wxCommandEvent& event) override;
 	virtual void Medium_CheckBoxOnCheckBox(wxCommandEvent& event) override;
 	virtual void Bright_CheckboxOnCheckBox(wxCommandEvent& event) override;
+	virtual void Histogram_ButtonOnButtonClick(wxCommandEvent& event) override;
 private:
 	void disableButtons();
 	void enableButtons();
@@ -61,5 +62,8 @@ private:
 	wxImage* FIBITMAPTowxImage(FIBITMAP* bitmap); //convert FIBITMAP to wxImage
 	void AdjustColors(double brightness, double contrast, double gamma); //change brightness, contrast and gamma of currentOnScreenImage
 	void AdjustColorsForBitmap(FIBITMAP* bitmap, double brightness, double contrast, double gamma, bool applyRed, bool applyGreen, bool applyBlue, bool applyDark, bool applyMedium, bool applyBright, double brightnessLevels[2]); //method which adjust gamma,brightness and contrast to passed FIBITMAP relying on passed parameters
+
+	void drawHistogram(FIBITMAP* bitmap); //method drawing histogram from bitmap given as an argument
+	DWORD data[256] = { 0 }; //array containing data for histogram
 };
 

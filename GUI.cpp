@@ -46,7 +46,7 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	wxBoxSizer* bSizer22;
 	bSizer22 = new wxBoxSizer(wxHORIZONTAL);
 
-	Histogram_Button = new wxButton(this, wxID_ANY, wxT("Histogram"), wxDefaultPosition, wxDefaultSize, 0);
+	Histogram_Button = new wxButton(this, wxID_ANY, wxT("Histogram dla ca³ego zdjêcia"), wxDefaultPosition, wxDefaultSize, 0);
 	Histogram_Button->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME));
 
 	bSizer22->Add(Histogram_Button, 0, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, 5);
@@ -159,8 +159,8 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	wxBoxSizer* bSizer11;
 	bSizer11 = new wxBoxSizer(wxVERTICAL);
 
-	Apply_Size_Button = new wxButton(this, wxID_ANY, wxT("ZatwierdŸ"), wxDefaultPosition, wxDefaultSize, 0);
-	bSizer11->Add(Apply_Size_Button, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL, 5);
+	//Apply_Size_Button = new wxButton(this, wxID_ANY, wxT("ZatwierdŸ"), wxDefaultPosition, wxDefaultSize, 0);
+	//bSizer11->Add(Apply_Size_Button, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL, 5);
 
 
 	bSizer4->Add(bSizer11, 0, wxEXPAND, 5);
@@ -258,7 +258,7 @@ MyFrame1::MyFrame1(wxWindow* parent, wxWindowID id, const wxString& title, const
 	Dark_Checkbox->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Dark_CheckboxOnCheckBox), NULL, this);
 	Medium_CheckBox->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Medium_CheckBoxOnCheckBox), NULL, this);
 	Bright_Checkbox->Connect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Bright_CheckboxOnCheckBox), NULL, this);
-	Apply_Size_Button->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MyFrame1::Apply_Size_ButtonOnButtonClick), NULL, this);
+	//Apply_Size_Button->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MyFrame1::Apply_Size_ButtonOnButtonClick), NULL, this);
 	Horizontal_Scrollbar->Connect(wxEVT_SCROLL_TOP, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
 	Horizontal_Scrollbar->Connect(wxEVT_SCROLL_BOTTOM, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
 	Horizontal_Scrollbar->Connect(wxEVT_SCROLL_LINEUP, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
@@ -320,7 +320,7 @@ MyFrame1::~MyFrame1()
 	Dark_Checkbox->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Dark_CheckboxOnCheckBox), NULL, this);
 	Medium_CheckBox->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Medium_CheckBoxOnCheckBox), NULL, this);
 	Bright_Checkbox->Disconnect(wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler(MyFrame1::Bright_CheckboxOnCheckBox), NULL, this);
-	Apply_Size_Button->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MyFrame1::Apply_Size_ButtonOnButtonClick), NULL, this);
+	//Apply_Size_Button->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MyFrame1::Apply_Size_ButtonOnButtonClick), NULL, this);
 	Horizontal_Scrollbar->Disconnect(wxEVT_SCROLL_TOP, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
 	Horizontal_Scrollbar->Disconnect(wxEVT_SCROLL_BOTTOM, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
 	Horizontal_Scrollbar->Disconnect(wxEVT_SCROLL_LINEUP, wxScrollEventHandler(MyFrame1::Horizontal_ScrollbarOnScroll), NULL, this);
