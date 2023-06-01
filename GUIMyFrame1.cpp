@@ -30,6 +30,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 		}
 		if ((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
 			FreeImage_processingFullSizeImage = FreeImage_Load(fif, openFileDialog.GetPath());
+			FreeImage_FlipVertical(FreeImage_processingFullSizeImage);
 		}
 		else
 		{
@@ -42,6 +43,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 		wxMessageBox(_("Obrazek w zbyt małej rozdzielczosci, sprobuj ponownie"));
 		return;
 	}
+	setBrightnessLimits(FreeImage_processingFullSizeImage);
 	processingFullSizeImage = orgImage.Copy();
 	prepareScaledThumbnail();
 	afterScroll();
@@ -125,7 +127,6 @@ void GUIMyFrame1::enableButtons() {
 	Reset_Button->Enable();
 }
 
-//This method rescale miniature panel and display rescaled miniature photo
 void GUIMyFrame1::displayThumbnail(int xRectPos, int yRectPos) {
 	if (!photoThumbnail.IsOk())
 		return;
@@ -201,48 +202,91 @@ wxImage* GUIMyFrame1::FIBITMAPTowxImage(FIBITMAP* bitmap) {
 	return image;
 }
 
-void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
-	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos,currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x,currentOnScreenYPos-Main_Panel->GetSize().y);
-	if (checkboxCounterBrightness > 0) {
-		//TO DO : adjusting gamma,brightness,contrast only for selected brightness of image
+void GUIMyFrame1::adjustColorsBrightnessRange(FIBITMAP* bitmap, std::function<bool(double, double, double)> f, double firstLimit, double secondLimit) {
+	FIBITMAP* toEdit = FreeImage_Clone(bitmap);
+	FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
+	RGBQUAD color;
+	RGBQUAD orgColor;
+	for (int y = 0; y < FreeImage_GetHeight(toEdit); y++) {
+		for (int x = 0; x < FreeImage_GetWidth(toEdit); x++) {
+			FreeImage_GetPixelColor(bitmap, x, y, &orgColor);
+			if (f(0.299 * orgColor.rgbRed + 0.587 * orgColor.rgbGreen + 0.114 * orgColor.rgbBlue,firstLimit,secondLimit)) {
+				FreeImage_GetPixelColor(toEdit, x, y, &color);
+				FreeImage_SetPixelColor(bitmap, x, y, &color);
+			}
+		}
+	}
+}
+
+void GUIMyFrame1::AdjustColorsForBitmap(FIBITMAP* bitmap, double brightness, double contrast, double gamma, bool applyRed, bool applyGreen, bool applyBlue, bool applyDark, bool applyMedium, bool applyBright, double brightnessLevels[2]) {
+	if (applyDark || applyMedium || applyBright) {
+		if (applyDark && applyMedium && applyBright) {
+			FreeImage_AdjustColors(bitmap, brightness, contrast, gamma);
+		}
+		else if (applyDark && applyBright) {
+			adjustColorsBrightnessRange(bitmap, [&](double brightness, double x, double y) {
+				if (brightness <= x || brightness >= y)
+					return true;
+				return false;
+				}, brightnessLevels[0], brightnessLevels[1]);
+		}
+		else {
+			double from = 0.0, to = 255.0;
+			if (applyDark && applyMedium) { to = brightnessLevels[1]; }
+			else if (applyMedium && applyBright) { from = brightnessLevels[0]; }
+			else if (applyDark) { to = brightnessLevels[0]; }
+			else if (applyMedium) { from = brightnessLevels[0]; to = brightnessLevels[1]; }
+			else { from = brightnessLevels[1]; }
+
+			adjustColorsBrightnessRange(bitmap, [&](double brightness, double x, double y) {
+				if (brightness >= x && brightness <= y)
+					return true;
+				return false;
+				}, from, to);
+		}
 	}
 	else {
 		//to optimize this operation we check how many checkbox is selected, thanks to that we perform maximum one iteration over pixels adjusting factors
-		if (checkboxCounterRGB == 1) {
-			FREE_IMAGE_COLOR_CHANNEL colorChannel;
-			if (Red_Checkbox->IsChecked()) {
-				colorChannel = FICC_RED;
-			}
-			else if (Green_Checkbox->IsChecked()) {
-				colorChannel = FICC_GREEN;
-			}
-			else {
-				colorChannel = FICC_BLUE;
-			}
-			FIBITMAP* toEdit = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
-			FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
-			FreeImage_SetChannel(FreeImage_currentOnScreenImage, toEdit, colorChannel);
+		if (applyRed && applyGreen && applyBlue) {
+			FreeImage_AdjustColors(bitmap, brightness, contrast, gamma);
 		}
-		else if (checkboxCounterRGB == 2) {
+		else if ((applyRed && applyGreen) || (applyRed && applyBlue) || (applyGreen && applyBlue)) {
 			FREE_IMAGE_COLOR_CHANNEL colorChannel;
-			if (!Red_Checkbox->IsChecked()) {
+			if (!applyRed) {
 				colorChannel = FICC_RED;
 			}
-			else if (!Green_Checkbox->IsChecked()) {
+			else if (!applyGreen) {
 				colorChannel = FICC_GREEN;
 			}
 			else {
 				colorChannel = FICC_BLUE;
 			}
-			FIBITMAP* toSave = FreeImage_GetChannel(FreeImage_currentOnScreenImage, colorChannel);
-			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
-			FreeImage_SetChannel(FreeImage_currentOnScreenImage, toSave, colorChannel);
+			FIBITMAP* toSave = FreeImage_GetChannel(bitmap, colorChannel);
+			FreeImage_AdjustColors(bitmap, brightness, contrast, gamma);
+			FreeImage_SetChannel(bitmap, toSave, colorChannel);
 		}
 		else {
-			FreeImage_AdjustColors(FreeImage_currentOnScreenImage, brightness, contrast, gamma);
+			FREE_IMAGE_COLOR_CHANNEL colorChannel;
+			if (applyRed) {
+				colorChannel = FICC_RED;
+			}
+			else if (applyGreen) {
+				colorChannel = FICC_GREEN;
+			}
+			else {
+				colorChannel = FICC_BLUE;
+			}
+			FIBITMAP* toEdit = FreeImage_GetChannel(bitmap, colorChannel);
+			FreeImage_AdjustColors(toEdit, brightness, contrast, gamma);
+			FreeImage_SetChannel(bitmap, toEdit, colorChannel);
 		}
 	}
-	//FreeImage_Threshold(FreeImage_currentOnScreenImage,150);
+}
+
+void GUIMyFrame1::AdjustColors(double brightness, double contrast, double gamma) {
+	FreeImage_currentOnScreenImage = FreeImage_Copy(FreeImage_processingFullSizeImage, currentOnScreenXPos,currentOnScreenYPos, currentOnScreenXPos + Main_Panel->GetSize().x,currentOnScreenYPos-Main_Panel->GetSize().y);
+	AdjustColorsForBitmap(FreeImage_currentOnScreenImage, brightness, contrast, gamma,Red_Checkbox->IsChecked(), Green_Checkbox->IsChecked(), Blue_Checkbox->IsChecked()
+		,Dark_Checkbox->IsChecked(),Medium_CheckBox->IsChecked(),Bright_Checkbox->IsChecked(),brightnessLimits);
 	currentOnScreenImage = *FIBITMAPTowxImage(FreeImage_currentOnScreenImage);
 }
 
@@ -343,4 +387,21 @@ void GUIMyFrame1::changeBrightnessCheckboxesState(bool state) {
 		Medium_CheckBox->Disable();
 		Bright_Checkbox->Disable();
 	}
+}
+void GUIMyFrame1::setBrightnessLimits(FIBITMAP* bitmap) {
+	double maxBrightness = 0.0;
+	double minBrightness = 255.0;
+	RGBQUAD color;
+	for (int y = 0; y < FreeImage_GetHeight(bitmap); y++) {
+		for (int x = 0; x < FreeImage_GetWidth(bitmap); x++) {
+			FreeImage_GetPixelColor(bitmap, x, y, &color);
+			double b = 0.299 * color.rgbRed + 0.587 * color.rgbGreen + 0.114 * color.rgbBlue;
+			if (b > maxBrightness)
+				maxBrightness = b;
+			if (b < minBrightness)
+				minBrightness = b;
+		}
+	}
+	brightnessLimits[0] = (maxBrightness-minBrightness) / 3 + minBrightness ;
+	brightnessLimits[1] = 2 * (maxBrightness-minBrightness) / 3 + minBrightness;
 }
