@@ -56,7 +56,6 @@ protected:
 	wxCheckBox* Dark_Checkbox;
 	wxCheckBox* Medium_CheckBox;
 	wxCheckBox* Bright_Checkbox;
-	wxButton* Apply_Size_Button;
 	wxScrollBar* Horizontal_Scrollbar;
 	wxPanel* Miniature_Panel;
 	wxScrollBar* Vertical_Scrollbar;
@@ -76,14 +75,11 @@ protected:
 	virtual void Dark_CheckboxOnCheckBox(wxCommandEvent& event) { event.Skip(); }
 	virtual void Medium_CheckBoxOnCheckBox(wxCommandEvent& event) { event.Skip(); }
 	virtual void Bright_CheckboxOnCheckBox(wxCommandEvent& event) { event.Skip(); }
-	virtual void Apply_Size_ButtonOnButtonClick(wxCommandEvent& event) { event.Skip(); }
 	virtual void Horizontal_ScrollbarOnScroll(wxScrollEvent& event) { event.Skip(); }
 	virtual void Vertical_ScrollbarOnScroll(wxScrollEvent& event) { event.Skip(); }
-
-
 public:
 
-	MyFrame1(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Korekcja Gamma"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(799, 600), long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
+	MyFrame1(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Gamma, brightness and contrast correction"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(799, 600), long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
 
 	~MyFrame1();
 
