@@ -27,6 +27,7 @@ brightness and contrast of an image. The program provides real-time feedback, al
 - Real-time observation of the results
 - Histogram of both the selected region and the entire image
 
+If you want an explanation of how we implemented the above features - click here -> [Documentation](./Documentation.md)
 
 ## Screenshots
 ![Example screenshot](./screenshot.png)
