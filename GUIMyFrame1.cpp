@@ -4,7 +4,6 @@
 GUIMyFrame1::GUIMyFrame1(wxWindow* parent) : MyFrame1(parent) {
 	//controls will be enabled when we load image
 	disableButtons();
-
 }
 
 void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
@@ -12,7 +11,6 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 	if (openFileDialog.ShowModal() == wxID_CANCEL) {
 		return;
 	}
-
 	wxImage::AddHandler(new wxJPEGHandler);
 	wxImage::AddHandler(new wxPNGHandler);
 	wxImage image;
@@ -23,7 +21,7 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 			wxMessageBox(_("Sprobuj ponownie zaladowac obrazek"));
 			return;
 		}
-		orgImage = image.Copy();
+		processingFullSizeImage = image.Copy();
 		fif = FreeImage_GetFileType(openFileDialog.GetPath());
 		if (fif == FIF_UNKNOWN) {
 			fif = FreeImage_GetFIFFromFilename(openFileDialog.GetPath());
@@ -31,20 +29,19 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 		if ((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
 			FreeImage_processingFullSizeImage = FreeImage_Load(fif, openFileDialog.GetPath());
 			FreeImage_FlipVertical(FreeImage_processingFullSizeImage);
+			FreeImage_orgImage = FreeImage_Clone(FreeImage_processingFullSizeImage);
 		}
 		else
 		{
 			wxMessageBox(_("Sprobuj ponownie zaladowac obrazek"));
 			return;
 		}
-
 	}
 	if (image.GetSize().x < Main_Panel->GetSize().x || image.GetSize().y < Main_Panel->GetSize().y) {
 		wxMessageBox(_("Obrazek w zbyt małej rozdzielczosci, sprobuj ponownie"));
 		return;
 	}
 	setBrightnessLimits(FreeImage_processingFullSizeImage);
-	processingFullSizeImage = orgImage.Copy();
 	prepareScaledThumbnail();
 	afterScroll();
 	displayMainImage();
@@ -54,12 +51,13 @@ void GUIMyFrame1::Load_File_ButtonOnButtonClick(wxCommandEvent& event) {
 void GUIMyFrame1::SaveFileButtonOnButtonClick(wxCommandEvent& event) {
 	wxFileDialog saveFileDialog(this, "Choose a file", "", "", "Image Files (*.png;*.jpg)|*.pnh;*.jpg", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (saveFileDialog.ShowModal() == wxID_CANCEL) return;
-	wxImage saveImage = processingFullSizeImage.Copy();
+	AdjustColorsForBitmap(FreeImage_processingFullSizeImage, brightness, contrast, gamma, Red_Checkbox->IsChecked(), Green_Checkbox->IsChecked(), Blue_Checkbox->IsChecked()
+		, Dark_Checkbox->IsChecked(), Medium_CheckBox->IsChecked(), Bright_Checkbox->IsChecked(), brightnessLimits);
+	wxImage saveImage = *FIBITMAPTowxImage(FreeImage_processingFullSizeImage);
 	saveImage.AddHandler(new wxJPEGHandler);
 	saveImage.AddHandler(new wxPNGHandler);
 	saveImage.SaveFile(saveFileDialog.GetPath());
 }
-
 
 void GUIMyFrame1::Horizontal_ScrollbarOnScroll(wxScrollEvent& event) {
 	afterScroll();
@@ -81,6 +79,7 @@ void GUIMyFrame1::Brightness_SliderOnScroll(wxScrollEvent& event) {
 void GUIMyFrame1::Contrast_SliderOnScroll(wxScrollEvent& event) {
 	contrast = (double)Contrast_Slider->GetValue();
 	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
 }
 
 void GUIMyFrame1::Gamma_SliderOnScroll(wxScrollEvent& event) {
@@ -102,7 +101,6 @@ void GUIMyFrame1::disableButtons() {
 	Dark_Checkbox->Disable();
 	Medium_CheckBox->Disable();
 	Bright_Checkbox->Disable();
-	//Apply_Size_Button->Disable();
 	Horizontal_Scrollbar->Disable();
 	Vertical_Scrollbar->Disable();
 	Reset_Button->Disable();
@@ -121,7 +119,6 @@ void GUIMyFrame1::enableButtons() {
 	Dark_Checkbox->Enable();
 	Medium_CheckBox->Enable();
 	Bright_Checkbox->Enable();
-	//Apply_Size_Button->Enable();
 	Horizontal_Scrollbar->Enable();
 	Vertical_Scrollbar->Enable();
 	Reset_Button->Enable();
@@ -141,12 +138,14 @@ void GUIMyFrame1::displayThumbnail(int xRectPos, int yRectPos) {
 }
 
 void GUIMyFrame1::prepareScaledThumbnail() {
-	double propotion = static_cast<double>(orgImage.GetWidth()) / orgImage.GetHeight();
+	int width = FreeImage_GetWidth(FreeImage_orgImage);
+	int height = FreeImage_GetHeight(FreeImage_orgImage);
+	double propotion = static_cast<double>(width) / height;
 	int panelWidth = Miniature_Panel->GetSize().x;
 	wxSize miniatureSize = wxSize(panelWidth, panelWidth/propotion);
-	selectedRectSize = wxSize(static_cast<double>(Main_Panel->GetSize().x) / orgImage.GetWidth() * miniatureSize.x, static_cast<double>(Main_Panel->GetSize().y) / orgImage.GetHeight()* miniatureSize.y);
+	selectedRectSize = wxSize(static_cast<double>(Main_Panel->GetSize().x) / width * miniatureSize.x, static_cast<double>(Main_Panel->GetSize().y) / height* miniatureSize.y);
 	Miniature_Panel->SetSize(miniatureSize);
-	photoThumbnail = orgImage.Scale(miniatureSize.x, miniatureSize.y);
+	photoThumbnail = processingFullSizeImage.Scale(miniatureSize.x, miniatureSize.y);
 	
 	//it is used for proper scrolling
 	xProportion = static_cast<double>(miniatureSize.x) / selectedRectSize.x;
@@ -157,13 +156,12 @@ void GUIMyFrame1::prepareScaledThumbnail() {
 	Vertical_Scrollbar->SetSize(wxSize(20, miniatureSize.y));
 }
 
-
 void GUIMyFrame1::afterScroll() {
 	int xPos = static_cast<double>(Horizontal_Scrollbar->GetThumbPosition()) / Horizontal_Scrollbar->GetRange() * Miniature_Panel->GetSize().x * (1 - 1.0 / xProportion);
 	int yPos = static_cast<double>(Vertical_Scrollbar->GetThumbPosition()) / Vertical_Scrollbar->GetRange() * Miniature_Panel->GetSize().y * (1 - 1.0 / yProportion);
 	displayThumbnail(xPos, yPos);
-	currentOnScreenXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * orgImage.GetWidth();
-	currentOnScreenYPos = - static_cast<double>(yPos) / Miniature_Panel->GetSize().y * orgImage.GetHeight() + orgImage.GetHeight();
+	currentOnScreenXPos = static_cast<double>(xPos) / Miniature_Panel->GetSize().x * processingFullSizeImage.GetWidth();
+	currentOnScreenYPos = - static_cast<double>(yPos) / Miniature_Panel->GetSize().y * processingFullSizeImage.GetHeight() + processingFullSizeImage.GetHeight();
 	AdjustColors(brightness, contrast, gamma);
 }
 
@@ -174,7 +172,6 @@ void GUIMyFrame1::displayMainImage() {
 	wxClientDC dc(Main_Panel);
 	dc.DrawBitmap(bitmap, 0, 0, true);
 }
-
 
 FIBITMAP* GUIMyFrame1::wxImageToFIBITMAP(wxImage* image) {
 	FIBITMAP* bitmap = FreeImage_Allocate(image->GetWidth(), image->GetHeight(), 24);
@@ -247,7 +244,7 @@ void GUIMyFrame1::AdjustColorsForBitmap(FIBITMAP* bitmap, double brightness, dou
 	}
 	else {
 		//to optimize this operation we check how many checkbox is selected, thanks to that we perform maximum one iteration over pixels adjusting factors
-		if (applyRed && applyGreen && applyBlue) {
+		if ( (applyRed && applyGreen && applyBlue) || !(applyRed || applyGreen || applyBlue)) {
 			FreeImage_AdjustColors(bitmap, brightness, contrast, gamma);
 		}
 		else if ((applyRed && applyGreen) || (applyRed && applyBlue) || (applyGreen && applyBlue)) {
@@ -300,6 +297,7 @@ void GUIMyFrame1::Red_CheckboxOnCheckBox(wxCommandEvent& event) {
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
+
 void GUIMyFrame1::Green_CheckboxOnCheckBox(wxCommandEvent& event) {
 	if (Green_Checkbox->IsChecked())
 		checkboxCounterRGB++;
@@ -309,6 +307,7 @@ void GUIMyFrame1::Green_CheckboxOnCheckBox(wxCommandEvent& event) {
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
+
 void GUIMyFrame1::Blue_CheckboxOnCheckBox(wxCommandEvent& event){
 	if (Blue_Checkbox->IsChecked())
 		checkboxCounterRGB++;
@@ -328,6 +327,7 @@ void GUIMyFrame1::Dark_CheckboxOnCheckBox(wxCommandEvent& event) {
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
+
 void GUIMyFrame1::Medium_CheckBoxOnCheckBox(wxCommandEvent& event){
 	if (Medium_CheckBox->IsChecked())
 		checkboxCounterBrightness++;
@@ -337,6 +337,7 @@ void GUIMyFrame1::Medium_CheckBoxOnCheckBox(wxCommandEvent& event){
 	AdjustColors(brightness, contrast, gamma);
 	displayMainImage();
 }
+
 void GUIMyFrame1::Bright_CheckboxOnCheckBox(wxCommandEvent& event){
 	if (Bright_Checkbox->IsChecked())
 		checkboxCounterBrightness++;
@@ -355,6 +356,7 @@ void GUIMyFrame1::checkRGBCheckboxCounter() {
 		changeBrightnessCheckboxesState(false);
 	}
 }
+
 void GUIMyFrame1::checkBrightnessCheckboxCounter() {
 	if (checkboxCounterBrightness == 0) {
 		changeRGBCheckboxesState(true);
@@ -363,7 +365,6 @@ void GUIMyFrame1::checkBrightnessCheckboxCounter() {
 		changeRGBCheckboxesState(false);
 	}
 }
-
 
 void GUIMyFrame1::changeRGBCheckboxesState(bool state) {
 	if (state) {
@@ -377,6 +378,7 @@ void GUIMyFrame1::changeRGBCheckboxesState(bool state) {
 		Blue_Checkbox->Disable();
 	}
 }
+
 void GUIMyFrame1::changeBrightnessCheckboxesState(bool state) {
 	if (state) {
 		Dark_Checkbox->Enable();
@@ -389,6 +391,7 @@ void GUIMyFrame1::changeBrightnessCheckboxesState(bool state) {
 		Bright_Checkbox->Disable();
 	}
 }
+
 void GUIMyFrame1::setBrightnessLimits(FIBITMAP* bitmap) {
 	double maxBrightness = 0.0;
 	double minBrightness = 255.0;
@@ -408,26 +411,67 @@ void GUIMyFrame1::setBrightnessLimits(FIBITMAP* bitmap) {
 }
 
 void GUIMyFrame1::Histogram_ButtonOnButtonClick(wxCommandEvent& event) {
-	drawHistogram(FreeImage_processingFullSizeImage);
+	FIBITMAP* toGetHistogram = FreeImage_Clone(FreeImage_processingFullSizeImage);
+	AdjustColorsForBitmap(toGetHistogram, brightness, contrast, gamma, Red_Checkbox->IsChecked(), Green_Checkbox->IsChecked(), Blue_Checkbox->IsChecked()
+		, Dark_Checkbox->IsChecked(), Medium_CheckBox->IsChecked(), Bright_Checkbox->IsChecked(), brightnessLimits);
+	drawHistogram(toGetHistogram);
 }
 
 void GUIMyFrame1::drawHistogram(FIBITMAP *bitmap) {
 	FreeImage_GetHistogram(bitmap, data, FICC_RGB);
 
 	double x = Histogram_Panel->GetSize().x;
-
 	double y = Histogram_Panel->GetSize().y;
-
 	double dx = x / 256;
-
 	int max = *std::max_element(data, data + 255);
 
 	wxClientDC dc(Histogram_Panel);
-	
+	dc.SetBackground(wxColor(255,255,255));
 	dc.Clear();
 
 	for (unsigned int i = 0; i < 256; i++) {
 		dc.SetBrush(*wxBLACK_BRUSH);
 		dc.DrawRectangle(wxRect(i * dx, y - ((double)data[i] / max) * y, 4, ((double)data[i] / max) * y));
 	}
+}
+
+void GUIMyFrame1::Apply_Color_ButtonOnButtonClick(wxCommandEvent& event) {
+	AdjustColorsForBitmap(FreeImage_processingFullSizeImage, brightness, contrast, gamma, Red_Checkbox->IsChecked(), Green_Checkbox->IsChecked(), Blue_Checkbox->IsChecked()
+		, Dark_Checkbox->IsChecked(), Medium_CheckBox->IsChecked(), Bright_Checkbox->IsChecked(), brightnessLimits);
+	processingFullSizeImage = *FIBITMAPTowxImage(FreeImage_processingFullSizeImage);
+	resetButtonsAndSliders();
+	setBrightnessLimits(FreeImage_processingFullSizeImage);
+	prepareScaledThumbnail();
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+	afterScroll();
+}
+void GUIMyFrame1::Reset_ButtonOnButtonClick(wxCommandEvent& event){
+	FreeImage_processingFullSizeImage = FreeImage_Clone(FreeImage_orgImage);
+	processingFullSizeImage = *FIBITMAPTowxImage(FreeImage_processingFullSizeImage);
+	resetButtonsAndSliders();
+	prepareScaledThumbnail();
+	setBrightnessLimits(FreeImage_orgImage);
+	AdjustColors(brightness, contrast, gamma);
+	displayMainImage();
+	afterScroll();
+}
+
+void GUIMyFrame1::resetButtonsAndSliders() {
+	Red_Checkbox->SetValue(false);
+	Green_Checkbox->SetValue(false);
+	Blue_Checkbox->SetValue(false);
+	Brightness_Slider->SetValue(0);
+	Contrast_Slider->SetValue(0);
+	Gamma_Slider->SetValue(0);
+	brightness = 0;
+	contrast = 0;
+	gamma = 1.0;
+	Dark_Checkbox->SetValue(false);
+	Medium_CheckBox->SetValue(false);
+	Bright_Checkbox->SetValue(false);
+	checkboxCounterBrightness = 0;
+	checkboxCounterRGB = 0;
+	checkBrightnessCheckboxCounter();
+	checkRGBCheckboxCounter();
 }
