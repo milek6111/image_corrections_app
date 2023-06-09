@@ -29,5 +29,5 @@ brightness and contrast of an image. The program provides real-time feedback, al
 
 
 ## Screenshots
-![Example screenshot](./img/screenshot.png)
+![Example screenshot](./screenshot.png)
 
